@@ -20,7 +20,7 @@ from sbi.utils.user_input_checks_utils import (
     OneDimPriorWrapper,
     PytorchReturnTypeWrapper,
 )
-
+import inspect
 
 def check_prior(prior: Any) -> None:
     """Assert that prior is a PyTorch distribution (or pass if None)."""
@@ -708,13 +708,18 @@ def check_sbi_inputs(simulator: Callable, prior: Distribution) -> None:
         num_samples={num_prior_samples}."""
 
 
-def check_estimator_arg(estimator: Union[str, Callable]) -> None:
+def check_estimator_arg(estimator: Union[str, Any]) -> None:
+
+    import sbi.neural_nets.estimators as sbi_estimators
+    sbi_estimators = tuple(obj for _ , obj in inspect.getmembers(sbi_estimators) if inspect.isclass(obj))
+
     """Check (density or ratio) estimator argument passed by the user."""
     assert isinstance(estimator, str) or (
-        isinstance(estimator, Callable) and not isinstance(estimator, nn.Module)
-    ), (
-        "The passed density estimator / classifier must be a string or a function "
-        f"returning a nn.Module, but is {type(estimator)}"
+    isinstance(estimator, Callable)) or (
+    isinstance(estimator, sbi_estimators)
+    ),(
+        "The passed density estimator / classifier must be either a string or a function "
+        f"or a type from sbi.neural_nets.estimators but is {type(estimator)}"
     )
 
 
